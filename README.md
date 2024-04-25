@@ -1,7 +1,3 @@
-Here's the updated README file with the enhanced WebSocket setup included, reflecting the latest changes to the scripts for better integration and functionality.
-
----
-
 # Real-Time Data Distribution System
 
 ## Introduction
