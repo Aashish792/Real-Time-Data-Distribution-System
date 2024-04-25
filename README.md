@@ -1,3 +1,7 @@
+Here's the updated README file with the enhanced WebSocket setup included, reflecting the latest changes to the scripts for better integration and functionality.
+
+---
+
 # Real-Time Data Distribution System
 
 ## Introduction
@@ -9,7 +13,7 @@ This project implements a real-time data distribution system leveraging advanced
 The system consists of three main components:
 
 1. **Data Producer**: Generates and sends messages to the queue server.
-2. **Queue Server**: Manages message queues and ensures reliable message transfer (RabbitMQ).
+2. **Queue Server (RabbitMQ)**: Manages message queues and ensures reliable message transfer.
 3. **Data Consumer**: Retrieves messages from the queue server and can forward them to clients via WebSockets.
 
 The system's architecture is designed for high availability and low latency, making it suitable for applications such as live streaming or real-time analytics.
@@ -27,7 +31,7 @@ Before running this system, ensure that you have the following installed:
 - Python 3.8 or higher
 - RabbitMQ server
 - Pika Python library (for interacting with RabbitMQ)
-- WebSockets Python library (for managing WebSocket connections)
+- Websockets Python library (for managing WebSocket connections)
 
 ## Setup Instructions
 
@@ -35,7 +39,7 @@ Before running this system, ensure that you have the following installed:
 
 2. **Install Python Libraries**:
    ```
-   pip install pika websocket-client
+   pip install pika websocket-client websockets
    ```
 
 3. **Clone the Repository**:
@@ -61,11 +65,11 @@ Before running this system, ensure that you have the following installed:
    ```
    This will prompt you to enter messages that will be sent to the queue.
 
-4. **Run the Data Consumer**:
+4. **Run the Data Consumer with WebSocket Integration**:
    ```
-   python consumer.py
+   python consumer_with_websocket.py
    ```
-   The consumer will listen to the queue and print out any messages it receives. Optionally, it can forward these messages to connected WebSocket clients.
+   The consumer will listen to the queue and forward any messages it receives to the WebSocket server, which then broadcasts these messages to all connected clients.
 
 ## Scope
 
@@ -76,3 +80,4 @@ The current implementation is intended to serve as a starting point. It does not
 - If the consumer or producer scripts fail to connect to RabbitMQ, verify that the RabbitMQ service is running and the connection parameters are correct.
 - If there are issues with messages not appearing in the queue, check that the queue names match in both the producer and consumer scripts.
 - Check the RabbitMQ management console to monitor queues and message flow.
+
