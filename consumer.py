@@ -1,48 +1,43 @@
+# consumer_with_websocket.py
 import pika
-import sys
-import time
+import websocket
+import threading
+import json
 
-# Configure your RabbitMQ connection parameters
-rabbitmq_host = 'localhost'
-queue_name = 'realtime_data'    
+# Connect to the WebSocket server as a client
+def start_websocket_client():
+    def on_message(ws, message):
+        print(f"Received from WebSocket: {message}")
 
-def callback(ch, method, properties, body):
-    print(f"Received message: {body.decode()}")
+    def on_error(ws, error):
+        print(f"WebSocket error: {error}")
 
-def start_consumer():
-    while True:
-        try:
-            # RabbitMQ connection
-            connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
-            channel = connection.channel()
+    def on_close(ws):
+        print("WebSocket closed")
 
-            # Ensure this matches the existing queue's 'durable' property
-            channel.queue_declare(queue=queue_name, durable=True)
+    ws = websocket.WebSocketApp("ws://localhost:8765",
+                                on_message=on_message,
+                                on_error=on_error,
+                                on_close=on_close)
+    ws.run_forever()
 
-            # Setup the consumption of messages from the 'realtime_data' queue
-            channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+def start_rabbitmq_consumer():
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+    channel.queue_declare(queue='realtime_data', durable=True)
+    ws_client = websocket.create_connection("ws://localhost:8765")
 
-            print(' [*] Waiting for messages. To exit press CTRL+C')
-            channel.start_consuming()
-        except pika.exceptions.ConnectionClosedByBroker:
-            # Unlikely in this case, but it can happen if the broker closes the connection, e.g. due to misconfiguration.
-            print("Connection was closed by broker, trying to reconnect...")
-            continue
-        except pika.exceptions.AMQPChannelError as err:
-            print(f"Caught a channel error: {err}, stopping...")
-            break
-        except pika.exceptions.AMQPConnectionError:
-            print("Connection was closed, retrying...")
-            time.sleep(5)
-            continue
-        except KeyboardInterrupt:
-            print("Consumer stopped by user.")
-            try:
-                if connection.is_open:
-                    connection.close()
-            except Exception as e:
-                print(f"Failed to close connection on KeyboardInterrupt: {e}")
-            sys.exit(0)
+    def callback(ch, method, properties, body):
+        print(f"Received from RabbitMQ: {body.decode()}")
+        # Send the message to the WebSocket server
+        ws_client.send(body.decode())
 
-if __name__ == "__main__":
-    start_consumer()
+    channel.basic_consume(queue='realtime_data', on_message_callback=callback, auto_ack=True)
+    print(' [*] Waiting for messages. To exit press CTRL+C')
+    channel.start_consuming()
+
+# Run the WebSocket client in a separate thread
+threading.Thread(target=start_websocket_client, daemon=True).start()
+
+# Run the RabbitMQ consumer in the main thread
+start_rabbitmq_consumer()
